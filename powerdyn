@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+DB = {
+  'type'  : 'mysql',
+  'host'  : 'localhost',
+  'db'    : 'powerdns',
+  'user'  : 'powerdns',
+  'passwd': 'powerdns',
+}
+
+import os
+import sys
+import re
+
+if len(sys.argv) != 2:
+  print "%s HOSTNAME" % sys.argv[0]
+  sys.exit(1)
+
+HOSTNAME=sys.argv[1]
+NEW_IPv4 = None
+NEW_IPv6 = None
+changed = False
+
+if os.environ.has_key('SSH_CLIENT'):
+  sshclient = os.environ['SSH_CLIENT']
+else:
+  print "not an SSH connection, nothing to do"
+  sys.exit(1)
+
+ip = sshclient.split()[0]
+
+if re.match(r'^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$', ip):
+  NEW_IPv4 = ip
+elif re.match(r'^[0-9a-f]{1,4}:[0-9a-f:]*:[0-9a-f]{0,4}$', ip):
+  NEW_IPv6 = ip
+else:
+  print "IPv32?!"
+  sys.exit(1)
+
+
+_GET_A = "SELECT content FROM records WHERE name=%(hostname)s AND type='A'"
+_GET_AAAA = "SELECT content FROM records WHERE name=%(hostname)s AND type='AAAA'"
+_GET_SOA = "SELECT content FROM records WHERE name=%(hostname)s AND type='SOA'"
+
+_SET_A = "UPDATE records SET content=%(ip)s WHERE name=%(hostname)s AND type='A'"
+_SET_AAAA = "UPDATE records SET content=%(ip)s WHERE name=%(hostname)s AND type='AAAA'"
+_SET_SOA = "UPDATE records SET content=%(soa)s WHERE name=%(hostname)s AND type='SOA'"
+
+import datetime
+import MySQLdb
+
+db = MySQLdb.connect(**DB)
+dbc = db.cursor()
+
+if NEW_IPv4:
+  dbc.execute(_GET_A, {'hostname': HOSTNAME})
+  ipv4 = dbc.fetchone()[0]
+  if ipv4 != NEW_IPv4:
+    changed = True
+    print "Updating A entry from %s to %s" % (ipv4, NEW_IPv4)
+    dbc.execute(_SET_A, {'hostname': HOSTNAME, 'ip': NEW_IPv4})
+
+if NEW_IPv6:
+  dbc.execute(_GET_AAAA, {'hostname': HOSTNAME})
+  ipv6 = dbc.fetchone()[0]
+  if ipv6 != NEW_IPv6:
+    changed = True
+    print "Updating AAAA entry from %s to %s" % (ipv6, NEW_IPv6)
+    dbc.execute(_SET_AAAA, {'hostname': HOSTNAME, 'ip': NEW_IPv6})
+
+if changed:
+  print "We had changes, updating serial"
+  dbc.execute(_GET_SOA, {'hostname': 'die-welt.net'})
+  soa = dbc.fetchone()[0]
+  print "Old SOA record: %s" % soa
+  soa = soa.split()
+  serial = soa[2]
+  today = datetime.date.today().strftime('%Y%m%d')
+  if serial.startswith(today):
+    serial = str(int(serial)+1)
+  else:
+    serial = '%s00' % today
+  soa = ' '.join(soa[:2] + [serial] + soa[3:])
+  print "New SOA record: %s" % soa
+  dbc.execute(_SET_SOA, {'hostname': HOSTNAME, 'soa': soa})
+  db.commit()
+
+dbc.close()
+db.close()
