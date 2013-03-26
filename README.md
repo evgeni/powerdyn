@@ -7,7 +7,7 @@ Clone the git repository, there is no real installation yet.
 
 Configuration
 -------------
-Edit the database credential at the top of the `powerdyn` script to match your environment
+Edit `powerdyn.conf` and adjust your database credentials to match your environment
 
 Usage
 -----

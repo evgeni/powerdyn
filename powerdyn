@@ -1,22 +1,51 @@
 #!/usr/bin/env python
 
-DB = {
-  'type'  : 'mysql',
-  'host'  : 'localhost',
-  'db'    : 'powerdns',
-  'user'  : 'powerdns',
-  'passwd': 'powerdns',
-}
+from optparse import OptionParser
+from ConfigParser import SafeConfigParser
 
 import os
 import sys
 import re
 
-if len(sys.argv) != 2:
+parser = OptionParser(version='0.0.1')
+parser.add_option("-c", "--config", dest="conffile",
+                  help="load configuration from CONFFILE")
+parser.add_option("-v", "--verbose",
+                  action="store_true", dest="verbose",
+                  help="use verbose output")
+(settings, args) = parser.parse_args()
+
+if not settings.conffile:
+    for f in ['/etc/powerdyn/powerdyn.conf', './powerdyn.conf']:
+        if os.path.isfile(f):
+            settings.conffile = f
+    if not settings.conffile:
+        print "Could not find a configuration file, exiting."
+        sys.exit(1)
+
+config = SafeConfigParser()
+config.read(settings.conffile)
+
+settings.dbtype = config.get('powerdyn', 'dbtype')
+if settings.dbtype == 'mysql':
+    database = 'MySQLdb'
+    settings.dbsettings = { 'host': config.get('powerdyn', 'dbhost'),
+                            'db': config.get('powerdyn', 'dbname'),
+                            'user': config.get('powerdyn', 'dbuser'),
+                            'passwd': config.get('powerdyn', 'dbpass'),
+                          }
+else:
+    print "No supported database configured."
+    sys.exit(1)
+
+exec("import %s as database" % database)
+settings.database = database
+
+if len(args) != 1:
   print "%s HOSTNAME" % sys.argv[0]
   sys.exit(1)
 
-HOSTNAME=sys.argv[1]
+HOSTNAME=args[0]
 NEW_IPv4 = None
 NEW_IPv6 = None
 changed = False
@@ -47,9 +76,8 @@ _SET_AAAA = "UPDATE records SET content=%(ip)s WHERE name=%(hostname)s AND type=
 _SET_SOA = "UPDATE records SET content=%(soa)s WHERE name=%(hostname)s AND type='SOA'"
 
 import datetime
-import MySQLdb
 
-db = MySQLdb.connect(**DB)
+db = database.connect(**settings.dbsettings)
 dbc = db.cursor()
 
 if NEW_IPv4:
@@ -57,7 +85,8 @@ if NEW_IPv4:
   ipv4 = dbc.fetchone()[0]
   if ipv4 != NEW_IPv4:
     changed = True
-    print "Updating A entry from %s to %s" % (ipv4, NEW_IPv4)
+    if settings.verbose:
+      print "Updating A entry from %s to %s" % (ipv4, NEW_IPv4)
     dbc.execute(_SET_A, {'hostname': HOSTNAME, 'ip': NEW_IPv4})
 
 if NEW_IPv6:
@@ -65,14 +94,17 @@ if NEW_IPv6:
   ipv6 = dbc.fetchone()[0]
   if ipv6 != NEW_IPv6:
     changed = True
-    print "Updating AAAA entry from %s to %s" % (ipv6, NEW_IPv6)
+    if settings.verbose:
+      print "Updating AAAA entry from %s to %s" % (ipv6, NEW_IPv6)
     dbc.execute(_SET_AAAA, {'hostname': HOSTNAME, 'ip': NEW_IPv6})
 
 if changed:
-  print "We had changes, updating serial"
+  if settings.verbose:
+    print "We had changes, updating serial"
   dbc.execute(_GET_SOA, {'hostname': 'die-welt.net'})
   soa = dbc.fetchone()[0]
-  print "Old SOA record: %s" % soa
+  if settings.verbose:
+    print "Old SOA record: %s" % soa
   soa = soa.split()
   serial = soa[2]
   today = datetime.date.today().strftime('%Y%m%d')
@@ -81,7 +113,8 @@ if changed:
   else:
     serial = '%s00' % today
   soa = ' '.join(soa[:2] + [serial] + soa[3:])
-  print "New SOA record: %s" % soa
+  if settings.verbose:
+    print "New SOA record: %s" % soa
   dbc.execute(_SET_SOA, {'hostname': HOSTNAME, 'soa': soa})
   db.commit()
 
