@@ -19,7 +19,7 @@ parser.add_option("-v", "--verbose",
 (settings, args) = parser.parse_args()
 
 if not settings.conffile:
-    for f in ['/etc/powerdyn/powerdyn.conf', './powerdyn.conf']:
+    for f in [os.path.expanduser('~/.powerdyn.conf'), '/etc/powerdyn/powerdyn.conf', './powerdyn.conf']:
         if os.path.isfile(f):
             settings.conffile = f
     if not settings.conffile:
