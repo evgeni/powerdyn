@@ -88,8 +88,7 @@ if NEW_IPv4:
   ipv4 = dbc.fetchone()[0]
   if ipv4 != NEW_IPv4:
     changed = True
-    if settings.verbose:
-      print "Updating A entry from %s to %s" % (ipv4, NEW_IPv4)
+    print "Updating A entry from %s to %s" % (ipv4, NEW_IPv4)
     dbc.execute(_SET_A, {'hostname': HOSTNAME, 'ip': NEW_IPv4})
 
 if NEW_IPv6:
@@ -97,8 +96,7 @@ if NEW_IPv6:
   ipv6 = dbc.fetchone()[0]
   if ipv6 != NEW_IPv6:
     changed = True
-    if settings.verbose:
-      print "Updating AAAA entry from %s to %s" % (ipv6, NEW_IPv6)
+    print "Updating AAAA entry from %s to %s" % (ipv6, NEW_IPv6)
     dbc.execute(_SET_AAAA, {'hostname': HOSTNAME, 'ip': NEW_IPv6})
 
 if changed:
