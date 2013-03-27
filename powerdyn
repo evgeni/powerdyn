@@ -85,7 +85,11 @@ dbc = db.cursor()
 
 if NEW_IPv4:
   dbc.execute(_GET_A, {'hostname': HOSTNAME})
-  ipv4 = dbc.fetchone()[0]
+  r = dbc.fetchone()
+  if not r:
+    print "%s not found!" % HOSTNAME
+    sys.exit(1)
+  ipv4 = r[0]
   if ipv4 != NEW_IPv4:
     changed = True
     print "Updating A entry from %s to %s" % (ipv4, NEW_IPv4)
@@ -93,7 +97,11 @@ if NEW_IPv4:
 
 if NEW_IPv6:
   dbc.execute(_GET_AAAA, {'hostname': HOSTNAME})
-  ipv6 = dbc.fetchone()[0]
+  r = dbc.fetchone()
+  if not r:
+    print "%s not found!" % HOSTNAME
+    sys.exit(1)
+  ipv6 = r[0]
   if ipv6 != NEW_IPv6:
     changed = True
     print "Updating AAAA entry from %s to %s" % (ipv6, NEW_IPv6)
