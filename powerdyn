@@ -29,6 +29,7 @@ if not settings.conffile:
 config = SafeConfigParser()
 config.read(settings.conffile)
 
+settings.domain = config.get('powerdyn', 'domain')
 settings.dbtype = config.get('powerdyn', 'dbtype')
 if settings.dbtype == 'mysql':
     database = 'MySQLdb'
@@ -110,7 +111,7 @@ if NEW_IPv6:
 if changed:
   if settings.verbose:
     print "We had changes, updating serial"
-  dbc.execute(_GET_SOA, {'hostname': 'die-welt.net'})
+  dbc.execute(_GET_SOA, {'hostname': settings.domain})
   soa = dbc.fetchone()[0]
   if settings.verbose:
     print "Old SOA record: %s" % soa
@@ -124,7 +125,7 @@ if changed:
   soa = ' '.join(soa[:2] + [serial] + soa[3:])
   if settings.verbose:
     print "New SOA record: %s" % soa
-  dbc.execute(_SET_SOA, {'hostname': HOSTNAME, 'soa': soa})
+  dbc.execute(_SET_SOA, {'hostname': settings.domain, 'soa': soa})
   db.commit()
 
 dbc.close()
