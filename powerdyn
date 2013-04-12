@@ -33,11 +33,11 @@ settings.domain = config.get('powerdyn', 'domain')
 settings.dbtype = config.get('powerdyn', 'dbtype')
 if settings.dbtype == 'mysql':
     database = 'MySQLdb'
-    settings.dbsettings = { 'host': config.get('powerdyn', 'dbhost'),
-                            'db': config.get('powerdyn', 'dbname'),
-                            'user': config.get('powerdyn', 'dbuser'),
-                            'passwd': config.get('powerdyn', 'dbpass'),
-                          }
+    settings.dbsettings = {'host': config.get('powerdyn', 'dbhost'),
+                           'db': config.get('powerdyn', 'dbname'),
+                           'user': config.get('powerdyn', 'dbuser'),
+                           'passwd': config.get('powerdyn', 'dbpass'),
+                           }
 else:
     print "No supported database configured."
     sys.exit(1)
@@ -49,12 +49,12 @@ if len(args) != 1:
     parser.print_help()
     sys.exit(1)
 
-HOSTNAME=args[0]
+HOSTNAME = args[0]
 NEW_IPv4 = None
 NEW_IPv6 = None
 changed = False
 
-if os.environ.has_key('SSH_CLIENT'):
+if 'SSH_CLIENT' in os.environ:
     sshclient = os.environ['SSH_CLIENT']
 else:
     print "not an SSH connection, nothing to do"
