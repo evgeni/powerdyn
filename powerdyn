@@ -46,8 +46,8 @@ exec("import %s as database" % database)
 settings.database = database
 
 if len(args) != 1:
-  print "%s HOSTNAME" % sys.argv[0]
-  sys.exit(1)
+    parser.print_help()
+    sys.exit(1)
 
 HOSTNAME=args[0]
 NEW_IPv4 = None
