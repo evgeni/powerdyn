@@ -7,6 +7,20 @@ import os
 import sys
 import re
 
+_GET_A = "SELECT content FROM records WHERE name=%(hostname)s AND type='A'"
+_GET_AAAA = "SELECT content FROM records WHERE name=%(hostname)s AND type='AAAA'"
+_GET_SOA = "SELECT content FROM records WHERE name=%(hostname)s AND type='SOA'"
+
+_SET_A = "UPDATE records SET content=%(ip)s WHERE name=%(hostname)s AND type='A'"
+_SET_AAAA = "UPDATE records SET content=%(ip)s WHERE name=%(hostname)s AND type='AAAA'"
+_SET_SOA = "UPDATE records SET content=%(soa)s WHERE name=%(hostname)s AND type='SOA'"
+
+
+def adapt_query_for_sqlite3(query):
+    # WARNING: This is a hack to convert the usual pyformat strings
+    # to named ones used by sqlite3
+    return query.replace('%(', ':').replace(')s', '')
+
 usage = 'Usage: %prog [options] HOSTNAME'
 version = '%prog 0.0.1'
 
@@ -45,6 +59,16 @@ elif settings.dbtype == 'postgres':
                             'user': config.get('powerdyn', 'dbuser'),
                             'password': config.get('powerdyn', 'dbpass'),
                             }
+elif settings.dbtype == 'sqlite3':
+    database = 'sqlite3'
+    settings.dbsettings = {'database': config.get('powerdyn', 'dbname'),
+                           }
+    _GET_A = adapt_query_for_sqlite3(_GET_A)
+    _GET_AAAA = adapt_query_for_sqlite3(_GET_AAAA)
+    _GET_SOA = adapt_query_for_sqlite3(_GET_SOA)
+    _SET_A = adapt_query_for_sqlite3(_SET_A)
+    _SET_AAAA = adapt_query_for_sqlite3(_SET_AAAA)
+    _SET_SOA = adapt_query_for_sqlite3(_SET_SOA)
 else:
     print "No supported database configured."
     sys.exit(1)
@@ -77,14 +101,6 @@ else:
     print "IPv32?!"
     sys.exit(1)
 
-
-_GET_A = "SELECT content FROM records WHERE name=%(hostname)s AND type='A'"
-_GET_AAAA = "SELECT content FROM records WHERE name=%(hostname)s AND type='AAAA'"
-_GET_SOA = "SELECT content FROM records WHERE name=%(hostname)s AND type='SOA'"
-
-_SET_A = "UPDATE records SET content=%(ip)s WHERE name=%(hostname)s AND type='A'"
-_SET_AAAA = "UPDATE records SET content=%(ip)s WHERE name=%(hostname)s AND type='AAAA'"
-_SET_SOA = "UPDATE records SET content=%(soa)s WHERE name=%(hostname)s AND type='SOA'"
 
 import datetime
 
