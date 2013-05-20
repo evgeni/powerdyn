@@ -13,7 +13,7 @@ Usage
 -----
 Add the following to the `~/.ssh/authorized_keys` of the user:
 
-    command="/usr/local/bin/powerdyn host.powerdyn.example.com" ssh-rsa <SOMESSHKEY>
+    no-agent-forwarding,no-port-forwarding,no-pty,no-X11-forwarding,no-user-rc,command="/usr/local/bin/powerdyn host.powerdyn.example.com" ssh-rsa <SOMESSHKEY>
 
 
 Add the following to the crontab on the machine you want the dynamic DNS for:
