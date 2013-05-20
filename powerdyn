@@ -53,12 +53,12 @@ if settings.dbtype == 'mysql':
                            'passwd': config.get('powerdyn', 'dbpass'),
                            }
 elif settings.dbtype == 'postgres':
-     database = 'psycopg2'
-     settings.dbsettings = {'host': config.get('powerdyn', 'dbhost'),
-                            'database': config.get('powerdyn', 'dbname'),
-                            'user': config.get('powerdyn', 'dbuser'),
-                            'password': config.get('powerdyn', 'dbpass'),
-                            }
+    database = 'psycopg2'
+    settings.dbsettings = {'host': config.get('powerdyn', 'dbhost'),
+                           'database': config.get('powerdyn', 'dbname'),
+                           'user': config.get('powerdyn', 'dbuser'),
+                           'password': config.get('powerdyn', 'dbpass'),
+                           }
 elif settings.dbtype == 'sqlite3':
     database = 'sqlite3'
     settings.dbsettings = {'database': config.get('powerdyn', 'dbname'),
