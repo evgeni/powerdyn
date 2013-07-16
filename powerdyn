@@ -40,7 +40,8 @@ if not settings.conffile:
         print "Could not find a configuration file, exiting."
         sys.exit(1)
 
-config = SafeConfigParser()
+defaults = {'domain': 'auto'}
+config = SafeConfigParser(defaults=defaults)
 config.read(settings.conffile)
 
 settings.domain = config.get('powerdyn', 'domain')
@@ -84,6 +85,9 @@ HOSTNAME = args[0]
 NEW_IPv4 = None
 NEW_IPv6 = None
 changed = False
+
+if settings.domain == 'auto':
+    settings.domain = str('.').join(HOSTNAME.split('.')[1:])
 
 if 'SSH_CLIENT' in os.environ:
     sshclient = os.environ['SSH_CLIENT']
