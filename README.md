@@ -9,6 +9,9 @@ Configuration
 -------------
 Edit `powerdyn.conf` and adjust the domain and database credentials to match your environment.
 
+`domain` can have the special value `auto` (or be absent) to trigger autodetection of the domain.
+Autodetection is implemented as stripping the first part of the FQDN passed as hostname.
+
 Usage
 -----
 Add the following to the `~/.ssh/authorized_keys` of the user:
