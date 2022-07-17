@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from optparse import OptionParser
-from ConfigParser import SafeConfigParser
+from configparser import ConfigParser
 
 import os
 import sys
@@ -37,11 +37,11 @@ if not settings.conffile:
         if os.path.isfile(f):
             settings.conffile = f
     if not settings.conffile:
-        print "Could not find a configuration file, exiting."
+        print("Could not find a configuration file, exiting.")
         sys.exit(1)
 
 defaults = {'domain': 'auto'}
-config = SafeConfigParser(defaults=defaults)
+config = ConfigParser(defaults=defaults)
 config.read(settings.conffile)
 
 settings.domain = config.get('powerdyn', 'domain')
@@ -71,7 +71,7 @@ elif settings.dbtype == 'sqlite3':
     _SET_AAAA = adapt_query_for_sqlite3(_SET_AAAA)
     _SET_SOA = adapt_query_for_sqlite3(_SET_SOA)
 else:
-    print "No supported database configured."
+    print("No supported database configured.")
     sys.exit(1)
 
 exec("import %s as database" % database)
@@ -92,7 +92,7 @@ if settings.domain == 'auto':
 if 'SSH_CLIENT' in os.environ:
     sshclient = os.environ['SSH_CLIENT']
 else:
-    print "not an SSH connection, nothing to do"
+    print("not an SSH connection, nothing to do")
     sys.exit(1)
 
 ip = sshclient.split()[0]
@@ -102,7 +102,7 @@ if re.match(r'^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$', ip):
 elif re.match(r'^[0-9a-f]{1,4}:[0-9a-f:]*:[0-9a-f]{0,4}$', ip):
     NEW_IPv6 = ip
 else:
-    print "IPv32?!"
+    print("IPv32?!")
     sys.exit(1)
 
 
@@ -115,33 +115,33 @@ if NEW_IPv4:
     dbc.execute(_GET_A, {'hostname': HOSTNAME})
     r = dbc.fetchone()
     if not r:
-        print "%s not found!" % HOSTNAME
+        print("%s not found!" % HOSTNAME)
         sys.exit(1)
     ipv4 = r[0]
     if ipv4 != NEW_IPv4:
         changed = True
-        print "Updating A entry from %s to %s" % (ipv4, NEW_IPv4)
+        print("Updating A entry from %s to %s" % (ipv4, NEW_IPv4))
         dbc.execute(_SET_A, {'hostname': HOSTNAME, 'ip': NEW_IPv4})
 
 if NEW_IPv6:
     dbc.execute(_GET_AAAA, {'hostname': HOSTNAME})
     r = dbc.fetchone()
     if not r:
-        print "%s not found!" % HOSTNAME
+        print("%s not found!" % HOSTNAME)
         sys.exit(1)
     ipv6 = r[0]
     if ipv6 != NEW_IPv6:
         changed = True
-        print "Updating AAAA entry from %s to %s" % (ipv6, NEW_IPv6)
+        print("Updating AAAA entry from %s to %s" % (ipv6, NEW_IPv6))
         dbc.execute(_SET_AAAA, {'hostname': HOSTNAME, 'ip': NEW_IPv6})
 
 if changed:
     if settings.verbose:
-        print "We had changes, updating serial"
+        print("We had changes, updating serial")
     dbc.execute(_GET_SOA, {'hostname': settings.domain})
     soa = dbc.fetchone()[0]
     if settings.verbose:
-        print "Old SOA record: %s" % soa
+        print("Old SOA record: %s" % soa)
     soa = soa.split()
     serial = soa[2]
     today = datetime.date.today().strftime('%Y%m%d')
@@ -151,7 +151,7 @@ if changed:
         serial = '%s00' % today
     soa = ' '.join(soa[:2] + [serial] + soa[3:])
     if settings.verbose:
-        print "New SOA record: %s" % soa
+        print("New SOA record: %s" % soa)
     dbc.execute(_SET_SOA, {'hostname': settings.domain, 'soa': soa})
     db.commit()
 
